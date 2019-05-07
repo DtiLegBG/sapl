@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from floppyforms.widgets import ClearableFileInput
 from image_cropping.widgets import CropWidget, ImageCropWidget
-from sapl.utils import FileFieldCheckMixin
+from sapl.utils import FileFieldCheckMixin, filiacao_data, intervalos_tem_intersecao
 
 from sapl.base.models import Autor, TipoAutor
 from sapl.crispy_layout_mixin import form_actions, to_row
@@ -23,7 +23,8 @@ from sapl.rules import SAPL_GROUP_VOTANTE
 import django_filters
 
 from .models import (ComposicaoColigacao, Filiacao, Frente, Legislatura,
-                     Mandato, Parlamentar, Votante, Bloco)
+                     Mandato, Parlamentar, Votante, Bloco, CargoBloco,
+                     CargoBlocoPartido)
 
 
 class ImageThumbnailFileInput(ClearableFileInput):
@@ -586,7 +587,6 @@ class VincularParlamentarForm(forms.Form):
 
 
 class BlocoForm(ModelForm):
-
     class Meta:
         model = Bloco
         fields = ['nome', 'partidos', 'data_criacao',
@@ -618,3 +618,54 @@ class BlocoForm(ModelForm):
             nome=bloco.nome
         )
         return bloco
+
+class CargoBlocoForm(ModelForm):
+    class Meta:
+       model = CargoBloco
+       fields = '__all__'
+
+class CargoBlocoPartidoForm(ModelForm):
+
+    class Meta:
+        model = CargoBlocoPartido
+        fields = ['cargo','parlamentar','data_inicio','data_fim']
+    
+
+    def __init__(self, *args, bloco_pk=None, **kwargs):
+        super(CargoBlocoPartidoForm, self).__init__(*args, **kwargs)
+        if bloco_pk is not None:
+            self.bloco = Bloco.objects.get(pk=bloco_pk)
+            partidos = self.bloco.partidos.all().values_list('id', flat=True)
+            parlamentares_filiacao = Filiacao.objects.select_related('partido').filter(partido__in=partidos).values_list('parlamentar', flat=True)
+            self.fields['parlamentar'].queryset = Parlamentar.objects.filter(id__in=parlamentares_filiacao)
+
+    def clean(self):
+        super(CargoBlocoPartidoForm, self).clean()
+        cleaned_data = self.cleaned_data
+
+        aux_data_fim = cleaned_data['data_fim'] if cleaned_data['data_fim'] else timezone.now().date()
+
+        if cleaned_data['cargo'].unico:
+            for vinculo in CargoBlocoPartido.objects.filter(bloco=self.bloco):
+                if not vinculo.data_fim:
+                    vinculo.data_fim = timezone.now().date()
+                if intervalos_tem_intersecao(cleaned_data['data_inicio'],
+                        aux_data_fim,
+                        vinculo.data_inicio,
+                        vinculo.data_fim) and vinculo.cargo.unico:
+                    raise ValidationError("Cargo unico já é utilizado nesse período.")
+        
+        if aux_data_fim < cleaned_data['data_inicio']:
+            raise ValidationError("Data Inicial deve ser anterior a data final.")
+        
+        fora_de_mandato = True
+        for mandato in Mandato.objects.filter(parlamentar=cleaned_data['parlamentar']):
+            if not mandato.legislatura.data_fim:
+                mandato.legislatura.data_fim = timezone.now().date()
+            if mandato.data_inicio_mandato < \
+                    cleaned_data['data_inicio'] < \
+                    aux_data_fim < \
+                    mandato.legislatura.data_fim:
+                fora_de_mandato = False              
+        if fora_de_mandato:
+            raise ValidationError("Data de inicio e fim fora de periodo do mandato do parlamentar.")

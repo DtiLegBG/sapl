@@ -657,3 +657,30 @@ class Bloco(models.Model):
 
     def __str__(self):
         return self.nome
+
+class CargoBloco(models.Model):
+    nome = models.CharField(
+        max_length=80, verbose_name=_('Nome do Cargo'))
+    unico = models.BooleanField(
+        choices=YES_NO_CHOICES, verbose_name=_('Cargo Único'), default=True)
+    descricao = models.TextField(blank=True, verbose_name=_('Descrição'))
+
+    def __str__(self):
+        return self.nome
+
+
+class CargoBlocoPartido(models.Model):
+    bloco = models.ForeignKey(
+    Bloco,
+    on_delete=models.PROTECT)
+
+    cargo = models.ForeignKey(
+    CargoBloco,
+    on_delete=models.PROTECT)
+
+    parlamentar = models.ForeignKey(
+    Parlamentar,
+    on_delete=models.PROTECT)
+
+    data_inicio = models.DateField(verbose_name=_('Data Início'))
+    data_fim = models.DateField(blank=True, null=True, verbose_name=_('Data Fim'))

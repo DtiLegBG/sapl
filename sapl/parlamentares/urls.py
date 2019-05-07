@@ -20,9 +20,11 @@ from sapl.parlamentares.views import (CargoMesaCrud, ColigacaoCrud,
                                       remove_parlamentar_composicao,
                                       lista_parlamentares,
                                       parlamentares_filiados,
-                                      BlocoCrud,
-                                      PesquisarParlamentarView, 
-                                      VincularParlamentarView,
+                                      BlocoCrud, CargoBlocoCrud,
+                                      PesquisarParlamentarView, VincularParlamentarView,
+                                      vincula_parlamentar_ao_bloco, 
+                                      edita_vinculo_parlamentar_bloco,
+                                      deleta_vinculo_parlamentar_bloco,
                                       deleta_historico_partido)
 
 from .apps import AppConfig
@@ -55,9 +57,19 @@ urlpatterns = [
 
     url(r'^sistema/coligacao/',
         include(ColigacaoCrud.get_urls() +
-                ComposicaoColigacaoCrud.get_urls())),    
+                ComposicaoColigacaoCrud.get_urls())),
+
     url(r'^sistema/bloco/',
         include(BlocoCrud.get_urls())),
+    url(r'^sistema/cargo-bloco/',
+        include(CargoBlocoCrud.get_urls())),
+    url(r'^sistema/vincula-parlamentar-ao-bloco/(?P<pk>\d+)/',
+        vincula_parlamentar_ao_bloco,name='vincula_parlamentar_ao_bloco'),
+    url(r'^sistema/edita-vinculo-parlamentar-bloco/(?P<pk>\d+)/',
+        edita_vinculo_parlamentar_bloco,name='edita-vinculo-parlamentar-bloco'),
+    url(r'^sistema/deleta-vinculo-parlamentar-bloco/(?P<pk>\d+)/',
+        deleta_vinculo_parlamentar_bloco,name='deleta-vinculo-parlamentar-bloco'),
+        
     url(r'^sistema/frente/',
         include(FrenteCrud.get_urls())),
     url(r'^sistema/frente/atualiza-lista-parlamentares',
