@@ -604,58 +604,119 @@ class Bloco(models.Model):
         return self.nome
 
 
-@reversion.register()
 class Bancada(models.Model):
-    legislatura = models.ForeignKey(Legislatura,
-                                    on_delete=models.PROTECT,
-                                    verbose_name=_('Legislatura'))
     nome = models.CharField(
-        max_length=80,
-        verbose_name=_('Nome da Bancada'))
-    partido = models.ForeignKey(Partido,
-                                blank=True,
-                                null=True,
-                                on_delete=models.PROTECT,
-                                verbose_name=_('Partido'))
-    data_criacao = models.DateField(blank=False, null=True,
-                                    verbose_name=_('Data Criação'))
-    data_extincao = models.DateField(blank=True, null=True,
-                                     verbose_name=_('Data Extinção'))
-    descricao = models.TextField(blank=True, verbose_name=_('Descrição'))
+        max_length=30,
+        verbose_name=_('Nome da Bancada Parlamentar')
+    )
+    descricao = models.TextField(
+        blank=True,
+        verbose_name=_('Descrição')
+    )
+    ativo = models.BooleanField(
+        db_index=True,
+        default=True,
+        choices=YES_NO_CHOICES,
+        verbose_name=_('Bancada Parlamentar ativa?')
+    )
 
     # campo conceitual de reversão genérica para o model Autor que dá a
     # o meio possível de localização de tipos de autores.
-    autor = SaplGenericRelation(Autor, related_query_name='bancada_set',
-                                fields_search=(
-                                    ('nome', '__icontains'),
-                                    ('descricao', '__icontains'),
-                                    ('partido__sigla', '__icontains'),
-                                    ('partido__nome', '__icontains'),
-                                ))
+
+    autor = SaplGenericRelation(
+        Autor,
+        related_query_name='bancada_set',
+        fields_search=(
+            ('nome', '__icontains'),
+            ('descricao', '__icontains'),
+            ('partido__sigla', '__icontains'),
+            ('partido__nome', '__icontains'),
+        )
+    )
 
     class Meta:
         db_table = 'parlamentares_bancada'
         verbose_name = _('Bancada Parlamentar')
         verbose_name_plural = _('Bancadas Parlamentares')
-        ordering = ('-legislatura__numero', )
+        ordering = ('nome', )
 
     def __str__(self):
         return self.nome
 
 
-@reversion.register()
-class CargoBancada(models.Model):
-    nome_cargo = models.CharField(max_length=80,
-                                  verbose_name=_('Cargo de Bancada'))
-
-    cargo_unico = models.BooleanField(default=False,
-                                      choices=YES_NO_CHOICES,
-                                      verbose_name=_('Cargo Único ?'))
+class MembroBancada(models.Model):
+    parlamentar = models.ForeignKey(
+        Parlamentar,
+        on_delete=models.CASCADE,
+        verbose_name=_('Parlamentar')
+    )
+    bancada = models.ForeignKey(
+        Bancada,
+        on_delete=models.CASCADE,
+        verbose_name=_('Bancada Parlamentar')
+    )
+    data_inicio = models.DateField(
+        verbose_name=_('Data Início de Membro')
+    )
+    data_fim = models.DateField(
+        verbose_name=_('Data Fim de Membro')
+    )
+    legislatura = models.ForeignKey(
+        Legislatura,
+        on_delete=models.CASCADE,
+        verbose_name=_('Legislatura do Membro')
+    )
 
     class Meta:
-        db_table = 'parlamentares_cargobancada'
-        verbose_name = _('Cargo de Bancada')
-        verbose_name_plural = _('Cargos de Bancada')
+        verbose_name = _('Membro Bancada Parlamentar')
+        verbose_name_plural = _('Membros Bancada Parlamentar')
+        ordering = ('parlamentar', )
 
     def __str__(self):
-        return self.nome_cargo
+        return '{} - {}'.format(self.parlamentar, self.bancada)
+
+
+class CargoBancada(models.Model):
+    nome = models.CharField(
+        max_length=30,
+        verbose_name=_('Nome do Cargo')
+    )
+    descricao = models.TextField(
+        blank=True,
+        verbose_name=_('Descrição')
+    )
+
+    class Meta:
+        verbose_name = _('Cargo Bancada Parlamentar')
+        verbose_name_plural = _('Cargos Bancada Parlamentar')
+        ordering = ('nome', )
+
+    def __str__(self):
+        return self.nome
+
+
+class CargoMembroBancada(models.Model):
+    cargo = models.ForeignKey(
+        CargoBancada,
+        on_delete=models.CASCADE,
+        verbose_name=_('Cargo do Membro')
+    )
+    membro = models.ForeignKey(
+        MembroBancada,
+        on_delete=models.CASCADE,
+        verbose_name=_('Membro no Cargo')
+    )
+    data_inicio = models.DateField(
+        verbose_name=_('Data Início do Membro no Cargo')
+    )
+    data_fim = models.DateField(
+        verbose_name=_('Data Fim do Membro no Cargo')
+    )
+
+    class Meta:
+        verbose_name = _('Cargo Membro Bancada Parlamentar')
+        verbose_name_plural = _('Cargos Membros Bancada Parlamentar')
+        ordering = ('cargo', )
+
+    def __str__(self):
+        return '{} - {}'.format(self.cargo, self.membro)
