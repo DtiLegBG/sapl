@@ -659,6 +659,11 @@ class Bloco(models.Model):
         return self.nome
 
 class CargoBloco(models.Model):
+    class Meta:
+        verbose_name = _('Cargo de Bloco')
+        verbose_name_plural = _('Cargos de Bloco')
+        ordering = ['nome']
+
     nome = models.CharField(
         max_length=80, verbose_name=_('Nome do Cargo'))
     unico = models.BooleanField(
@@ -670,6 +675,11 @@ class CargoBloco(models.Model):
 
 
 class CargoBlocoPartido(models.Model):
+    class Meta:
+        verbose_name = _('Vinculo bloco parlamentar')
+        verbose_name_plural = _('Vinculos bloco parlamentar')
+        ordering = ['data_inicio']
+
     bloco = models.ForeignKey(
     Bloco,
     on_delete=models.PROTECT)

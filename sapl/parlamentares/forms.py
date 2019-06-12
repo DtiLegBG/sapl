@@ -621,8 +621,8 @@ class BlocoForm(ModelForm):
 
 class CargoBlocoForm(ModelForm):
     class Meta:
-       model = CargoBloco
-       fields = '__all__'
+        model = CargoBloco
+        fields = '__all__'
 
 class CargoBlocoPartidoForm(ModelForm):
 
@@ -631,9 +631,9 @@ class CargoBlocoPartidoForm(ModelForm):
         fields = ['cargo','parlamentar','data_inicio','data_fim']
     
 
-    def __init__(self, *args, bloco_pk=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(CargoBlocoPartidoForm, self).__init__(*args, **kwargs)
-        if bloco_pk is not None:
+        if kwargs['bloco_pk']:
             self.bloco = Bloco.objects.get(pk=bloco_pk)
             partidos = self.bloco.partidos.all().values_list('id', flat=True)
             parlamentares_filiacao = Filiacao.objects.select_related('partido').filter(partido__in=partidos).values_list('parlamentar', flat=True)
