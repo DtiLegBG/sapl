@@ -631,9 +631,9 @@ class CargoBlocoPartidoForm(ModelForm):
         fields = ['cargo','parlamentar','data_inicio','data_fim']
     
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, bloco_pk=None, *args, **kwargs):
         super(CargoBlocoPartidoForm, self).__init__(*args, **kwargs)
-        if kwargs['bloco_pk']:
+        if bloco_pk:
             self.bloco = Bloco.objects.get(pk=bloco_pk)
             partidos = self.bloco.partidos.all().values_list('id', flat=True)
             parlamentares_filiacao = Filiacao.objects.select_related('partido').filter(partido__in=partidos).values_list('parlamentar', flat=True)
