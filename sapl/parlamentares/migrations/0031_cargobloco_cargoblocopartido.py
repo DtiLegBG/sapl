@@ -21,6 +21,7 @@ class Migration(migrations.Migration):
                 ('unico', models.BooleanField(choices=[(True, 'Sim'), (False, 'Não')], default=True, verbose_name='Cargo Único')),
                 ('descricao', models.TextField(blank=True, verbose_name='Descrição')),
             ],
+            options={'ordering': ['nome'], 'verbose_name': 'Cargo de Bloco', 'verbose_name_plural': 'Cargos de Bloco'},
         ),
         migrations.CreateModel(
             name='CargoBlocoPartido',
@@ -32,5 +33,6 @@ class Migration(migrations.Migration):
                 ('cargo', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='parlamentares.CargoBloco')),
                 ('parlamentar', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='parlamentares.Parlamentar')),
             ],
+            options={'ordering': ['data_inicio'], 'verbose_name': 'Vinculo bloco parlamentar', 'verbose_name_plural': 'Vinculos bloco parlamentar'},
         ),
     ]
