@@ -1223,9 +1223,6 @@ class BlocoCrud(CrudAux):
             return context
         
         
-
-
-
 class CargoBlocoCrud(CrudAux):
     model = CargoBloco
    
@@ -1235,7 +1232,7 @@ class CargoBlocoCrud(CrudAux):
 def vincula_parlamentar_ao_bloco(request,pk):
     template_name = "parlamentares/vincula_parlamentar_ao_bloco.html"
     if request.method == 'POST':
-        form = CargoBlocoPartidoForm(request.POST,bloco_pk=pk)
+        form = CargoBlocoPartidoForm(request.POST,initial={'bloco_pk': pk})
         if form.is_valid():
             vinculo = form.save(commit=False)
             vinculo.bloco = Bloco.objects.get(pk=pk)
@@ -1245,7 +1242,7 @@ def vincula_parlamentar_ao_bloco(request,pk):
                     'sapl.parlamentares:bloco_detail',
                     kwargs={'pk': pk}))
     else:
-        form = CargoBlocoPartidoForm(bloco_pk=pk)
+        form = CargoBlocoPartidoForm(initial={'bloco_pk': pk})
 
     return render(request, template_name, {'form': form,'pk':pk})
 
@@ -1253,17 +1250,15 @@ def edita_vinculo_parlamentar_bloco(request,pk):
     template_name = "parlamentares/vincula_parlamentar_ao_bloco.html"
     vinculo = get_object_or_404(CargoBlocoPartido, pk=pk)
     if request.method == 'POST':
-        form = CargoBlocoPartidoForm(request.POST,instance=vinculo, bloco_pk=vinculo.bloco.pk)
+        form = CargoBlocoPartidoForm(request.POST,instance=vinculo, initial={'bloco_pk':vinculo.bloco.pk})
         if form.is_valid():
-            vinculo = form.save(commit=False)
-            vinculo.save()
+            vinculo = form.save(commit=True)
             return HttpResponseRedirect(
                 reverse(
                     'sapl.parlamentares:bloco_detail',
                     kwargs={'pk': vinculo.bloco.pk}))
     else:
-        form = CargoBlocoPartidoForm(instance=vinculo, bloco_pk=vinculo.bloco.pk)
-        form.fields['parlamentar'].readonly = True
+        form = CargoBlocoPartidoForm(instance=vinculo, initial={'bloco_pk':vinculo.bloco.pk})
 
     return render(request, template_name, {'form': form,'pk':vinculo.bloco.pk})
 

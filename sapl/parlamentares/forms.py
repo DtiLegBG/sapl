@@ -631,13 +631,18 @@ class CargoBlocoPartidoForm(ModelForm):
         fields = ['cargo','parlamentar','data_inicio','data_fim']
     
 
-    def __init__(self, bloco_pk=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(CargoBlocoPartidoForm, self).__init__(*args, **kwargs)
+        bloco_pk = self.initial['bloco_pk']
         if bloco_pk:
             self.bloco = Bloco.objects.get(pk=bloco_pk)
             partidos = self.bloco.partidos.all().values_list('id', flat=True)
             parlamentares_filiacao = Filiacao.objects.select_related('partido').filter(partido__in=partidos).values_list('parlamentar', flat=True)
             self.fields['parlamentar'].queryset = Parlamentar.objects.filter(id__in=parlamentares_filiacao)
+        
+        if self.instance:
+            self.fields['parlamentar'].widget.attrs['readonly'] = False
+
 
     def clean(self):
         super(CargoBlocoPartidoForm, self).clean()
@@ -650,10 +655,11 @@ class CargoBlocoPartidoForm(ModelForm):
                 if not vinculo.data_fim:
                     vinculo.data_fim = timezone.now().date()
                 if intervalos_tem_intersecao(cleaned_data['data_inicio'],
-                        aux_data_fim,
-                        vinculo.data_inicio,
-                        vinculo.data_fim) and vinculo.cargo.unico:
-                    raise ValidationError("Cargo unico já é utilizado nesse período.")
+                    aux_data_fim,
+                    vinculo.data_inicio,
+                    vinculo.data_fim) and vinculo.cargo.unico and \
+                    not(self.instance and self.instance.id == vinculo.id):
+                        raise ValidationError("Cargo unico já é utilizado nesse período.")
         
         if aux_data_fim < cleaned_data['data_inicio']:
             raise ValidationError("Data Inicial deve ser anterior a data final.")
