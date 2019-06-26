@@ -640,8 +640,9 @@ class CargoBlocoPartidoForm(ModelForm):
             parlamentares_filiacao = Filiacao.objects.select_related('partido').filter(partido__in=partidos).values_list('parlamentar', flat=True)
             self.fields['parlamentar'].queryset = Parlamentar.objects.filter(id__in=parlamentares_filiacao)
         
-        if self.instance:
-            self.fields['parlamentar'].widget.attrs['readonly'] = False
+        if self.instance and self.instance.pk:
+            self.fields['parlamentar'].widget.attrs['disabled'] = 'disabled'
+            self.fields['parlamentar'].required = False
 
 
     def clean(self):
@@ -665,7 +666,13 @@ class CargoBlocoPartidoForm(ModelForm):
             raise ValidationError("Data Inicial deve ser anterior a data final.")
         
         fora_de_mandato = True
-        for mandato in Mandato.objects.filter(parlamentar=cleaned_data['parlamentar']):
+
+        if self.instance and self.instance.pk:
+            self.cleaned_data['parlamentar'] = self.instance.parlamentar
+        else:
+            parlamentar = self.cleaned_data.get('parlamentar')
+
+        for mandato in Mandato.objects.filter(parlamentar=self.cleaned_data.get('parlamentar')):
             if not mandato.legislatura.data_fim:
                 mandato.legislatura.data_fim = timezone.now().date()
             if mandato.data_inicio_mandato < \
@@ -675,3 +682,7 @@ class CargoBlocoPartidoForm(ModelForm):
                 fora_de_mandato = False              
         if fora_de_mandato:
             raise ValidationError("Data de inicio e fim fora de periodo do mandato do parlamentar.")
+        
+        if self.instance.pk and (cleaned_data['parlamentar'].id != self.instance.parlamentar.id):
+            raise ValidationError("Não é possivel alterar o parlamentar " + str(self.instance.parlamentar))
+        
