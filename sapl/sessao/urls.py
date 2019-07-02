@@ -34,8 +34,7 @@ from sapl.sessao.views import (AdicionarVariasMateriasExpediente,
                                sessao_legislativa_legislatura_ajax,
                                VotacaoEmBlocoOrdemDia, VotacaoEmBlocoExpediente,
                                VotacaoEmBlocoSimbolicaView, VotacaoEmBlocoNominalView,
-                               resumo_ordenacao,
-                               recuperar_nome_tipo_sessao)
+                               resumo_ordenacao, recuperar_nome_tipo_sessao, atualiza_status_tramitacao)
 
 from .apps import AppConfig
 
@@ -120,6 +119,8 @@ urlpatterns = [
         PesquisarPautaSessaoView.as_view(), name='pesquisar_pauta'),
     url(r'^sessao/pauta-sessao/(?P<pk>\d+)$',
         PautaSessaoDetailView.as_view(), name='pauta_sessao_detail'),
+    url(r'^sessao/pauta-sessao/(?P<pk>\d+)/atualiza_situacao/$',
+        atualiza_status_tramitacao, name='atualiza_situacao'),
 
     # Subnav sessão
     url(r'^sessao/(?P<pk>\d+)/expediente$',

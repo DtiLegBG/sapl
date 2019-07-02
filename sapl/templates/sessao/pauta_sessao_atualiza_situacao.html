@@ -1,0 +1,21 @@
+{% extends "crud/detail.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block base_content %}
+    <fieldset>
+        <legend>Atualização da Situação da Matéria na Pauta</legend>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Atual Situação</th>
+                <th>Nova Situação</th>
+            </tr>
+            </thead>
+            <tr>
+                <td style="width:50%;"></td>
+                <td style="width:50%;"></td>
+            </tr>
+        </table>
+    </fieldset>
+{% endblock base_content %}

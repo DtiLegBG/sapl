@@ -3266,21 +3266,15 @@ class PautaSessaoDetailView(DetailView):
         ]})
         # =====================================================================
         # Matérias Expediente
-        materias = ExpedienteMateria.objects.filter(
-            sessao_plenaria_id=self.object.id)
+        materias = ExpedienteMateria.objects.filter(sessao_plenaria_id=self.object.id)
 
         materias_expediente = []
         for m in materias:
             ementa = m.materia.ementa
             titulo = m.materia
             numero = m.numero_ordem
+            situacao = m.tramitacao.status if m.tramitacao else _("Não informada")
 
-            ultima_tramitacao = m.materia.tramitacao_set.last()
-
-            situacao = ultima_tramitacao.status if ultima_tramitacao else None
-
-            if situacao is None:
-                situacao = _("Não informada")
             rv = m.registrovotacao_set.all()
             if rv:
                 resultado = rv[0].tipo_resultado_votacao.nome
@@ -3307,15 +3301,12 @@ class PautaSessaoDetailView(DetailView):
         context.update({'materia_expediente': materias_expediente})
         # =====================================================================
         # Expedientes
-        expediente = ExpedienteSessao.objects.filter(
-            sessao_plenaria_id=self.object.id)
+        expediente = ExpedienteSessao.objects.filter(sessao_plenaria_id=self.object.id)
 
         expedientes = []
         for e in expediente:
-            tipo = TipoExpediente.objects.get(
-                id=e.tipo_id)
-            conteudo = sub(
-                '&nbsp;', ' ', strip_tags(e.conteudo.replace('<br/>', '\n')))
+            tipo = TipoExpediente.objects.get(id=e.tipo_id)
+            conteudo = sub('&nbsp;', ' ', strip_tags(e.conteudo.replace('<br/>', '\n')))
 
             ex = {'tipo': tipo, 'conteudo': conteudo}
             expedientes.append(ex)
@@ -3323,26 +3314,19 @@ class PautaSessaoDetailView(DetailView):
         context.update({'expedientes': expedientes})
         # =====================================================================
         # Orador Expediente
-        oradores = OradorExpediente.objects.filter(
-            sessao_plenaria_id=self.object.id).order_by('numero_ordem')
+        oradores = OradorExpediente.objects.filter(sessao_plenaria_id=self.object.id).order_by('numero_ordem')
         context.update({'oradores': oradores})
         # =====================================================================
         # Matérias Ordem do Dia
-        ordem = OrdemDia.objects.filter(
-            sessao_plenaria_id=self.object.id)
+        ordem = OrdemDia.objects.filter(sessao_plenaria_id=self.object.id)
 
         materias_ordem = []
         for o in ordem:
             ementa = o.materia.ementa
             titulo = o.materia
             numero = o.numero_ordem
+            situacao = o.tramitacao.status if o.tramitacao else _("Não informada")
 
-            ultima_tramitacao = o.materia.tramitacao_set.last()
-
-            situacao = ultima_tramitacao.status if ultima_tramitacao else None
-
-            if situacao is None:
-                situacao = _("Não informada")
             # Verificar resultado
             rv = o.registrovotacao_set.all()
             if rv:
@@ -3352,8 +3336,7 @@ class PautaSessaoDetailView(DetailView):
                 resultado = _('Matéria não votada')
                 resultado_observacao = _(' ')
 
-            autoria = Autoria.objects.filter(
-                materia_id=o.materia_id)
+            autoria = Autoria.objects.filter(materia_id=o.materia_id)
             autor = [str(x.autor) for x in autoria]
 
             mat = {'id': o.materia_id,
@@ -3374,6 +3357,14 @@ class PautaSessaoDetailView(DetailView):
         return self.render_to_response(context)
 
 
+def atualiza_status_tramitacao(request, pk):
+    template_name = "sessao/pauta_sessao_atualiza_situacao.html"
+    materia = MateriaLegislativa.objects.get(id=pk)
+    context = {}
+
+    return render(request, template_name, context)
+
+
 class PesquisarSessaoPlenariaView(FilterView):
     model = SessaoPlenaria
     filterset_class = SessaoPlenariaFilterSet
@@ -3386,11 +3377,9 @@ class PesquisarSessaoPlenariaView(FilterView):
 
         kwargs = {'data': self.request.GET or None}
 
-        qs = self.get_queryset().select_related(
-            'tipo', 'sessao_legislativa', 'legislatura')
+        qs = self.get_queryset().select_related('tipo', 'sessao_legislativa', 'legislatura')
 
-        qs = qs.distinct().order_by(
-            '-legislatura__numero', '-data_inicio', '-hora_inicio')
+        qs = qs.distinct().order_by('-legislatura__numero', '-data_inicio', '-hora_inicio')
 
         kwargs.update({
             'queryset': qs,
