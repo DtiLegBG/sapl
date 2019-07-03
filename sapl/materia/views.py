@@ -47,7 +47,8 @@ from sapl.materia.forms import (AnexadaForm, AutoriaForm,
                                 ConfirmarProposicaoForm,
                                 DevolverProposicaoForm, LegislacaoCitadaForm,
                                 OrgaoForm, ProposicaoForm, TipoProposicaoForm,
-                                TramitacaoForm, TramitacaoUpdateForm, MateriaPesquisaSimplesForm)
+                                TramitacaoForm, TramitacaoUpdateForm, MateriaPesquisaSimplesForm,
+                                DespachoInicialCreateForm)
 from sapl.norma.models import LegislacaoCitada
 from sapl.parlamentares.models import Legislatura
 from sapl.protocoloadm.models import Protocolo
@@ -1491,7 +1492,7 @@ class AutoriaMultiCreateView(PermissionRequiredForAppCrudMixin, FormView):
 
 class DespachoInicialMultiCreateView(PermissionRequiredForAppCrudMixin, FormView):
     app_label = sapl.materia.apps.AppConfig.label
-    form_class = DespachoInicialForm
+    form_class = DespachoInicialCreateForm
     template_name = 'materia/despachoinicial_multicreate_form.html'
 
     # @classmethod
@@ -1536,9 +1537,6 @@ class DespachoInicialCrud(MasterDetailCrud):
     parent_field = 'materia'
     help_topic = 'despacho_autoria'
     public = [RP_LIST, RP_DETAIL]
-
-    # class CreateView(MasterDetailCrud.CreateView):
-    #     form_class = DespachoInicialForm
 
     class UpdateView(MasterDetailCrud.UpdateView):
         form_class = DespachoInicialForm
